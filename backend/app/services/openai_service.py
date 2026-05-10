@@ -1,27 +1,30 @@
 """
-OpenAI service — initialises the client and exposes helper functions.
+Groq service — initialises the Groq client and exposes helper functions.
 The API key is loaded from app.config and never exposed to the frontend.
+
+Groq's API is OpenAI-compatible, so we use the OpenAI client pointed at
+Groq's base URL for simplicity.
 """
 
 import json
 import logging
 from typing import Any, Dict, Optional
 
-from openai import APIConnectionError, APIStatusError, OpenAI
+from groq import APIConnectionError, APIStatusError, Groq
 
 from app.config import settings
 
 logger = logging.getLogger(__name__)
 
 
-def _get_client() -> OpenAI:
-    """Create OpenAI client lazily so missing keys don't crash on import."""
-    api_key = settings.OPENAI_API_KEY
+def _get_client() -> Groq:
+    """Create Groq client lazily so missing keys don't crash on import."""
+    api_key = settings.GROQ_API_KEY
     if not api_key:
         raise RuntimeError(
-            "OPENAI_API_KEY is not set. Add it to backend/.env or Streamlit secrets."
+            "GROQ_API_KEY is not set. Add it to backend/.env or Streamlit secrets."
         )
-    return OpenAI(api_key=api_key)
+    return Groq(api_key=api_key)
 
 
 async def call_openai_json(
@@ -32,7 +35,7 @@ async def call_openai_json(
     max_tokens: int = 1024,
 ) -> Dict[str, Any]:
     """
-    Send *prompt* to OpenAI and return the response parsed as JSON.
+    Send *prompt* to Groq and return the response parsed as JSON.
 
     Parameters
     ----------
@@ -57,7 +60,7 @@ async def call_openai_json(
     RuntimeError
         If the API call fails (network, auth, rate-limit, etc.).
     """
-    chosen_model = model or settings.OPENAI_MODEL
+    chosen_model = model or settings.GROQ_MODEL
 
     try:
         response = _get_client().chat.completions.create(
@@ -77,16 +80,16 @@ async def call_openai_json(
             ],
         )
     except APIConnectionError as exc:
-        logger.error("OpenAI connection error: %s", exc)
+        logger.error("Groq connection error: %s", exc)
         raise RuntimeError(
-            "Could not connect to OpenAI. Check your network."
+            "Could not connect to Groq. Check your network."
         ) from exc
     except APIStatusError as exc:
         logger.error(
-            "OpenAI API error %s: %s", exc.status_code, exc.message
+            "Groq API error %s: %s", exc.status_code, exc.message
         )
         raise RuntimeError(
-            f"OpenAI API error ({exc.status_code}): {exc.message}"
+            f"Groq API error ({exc.status_code}): {exc.message}"
         ) from exc
 
     raw_text = response.choices[0].message.content or ""
@@ -94,7 +97,7 @@ async def call_openai_json(
     try:
         return json.loads(raw_text)
     except json.JSONDecodeError as exc:
-        logger.error("Invalid JSON from OpenAI: %s", raw_text[:200])
+        logger.error("Invalid JSON from Groq: %s", raw_text[:200])
         raise ValueError(
-            "OpenAI returned a response that is not valid JSON."
+            "Groq returned a response that is not valid JSON."
         ) from exc

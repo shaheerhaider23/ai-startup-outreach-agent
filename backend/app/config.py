@@ -33,12 +33,12 @@ class Settings:
     """Centralised, read-only access to environment variables."""
 
     @property
-    def OPENAI_API_KEY(self) -> str:
-        return _get_secret("OPENAI_API_KEY", "")
+    def GROQ_API_KEY(self) -> str:
+        return _get_secret("GROQ_API_KEY", "")
 
     @property
-    def OPENAI_MODEL(self) -> str:
-        return _get_secret("OPENAI_MODEL", "gpt-4o-mini")
+    def GROQ_MODEL(self) -> str:
+        return _get_secret("GROQ_MODEL", "llama-3.3-70b-versatile")
 
     @property
     def RESEND_API_KEY(self) -> str:
