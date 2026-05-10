@@ -299,62 +299,83 @@ def _relevance_score(
     """
     Score 0-100 indicating how relevant a result is to the ICP.
 
-    Factors:
-      - target_customer_type keyword match (+15 per word)
-      - industry keyword match (+10 per word)
-      - ideal_customer keyword match (+8 per word)
-      - idea keyword match (+12 per word)
-      - "contact" in text (+5)
-      - pain_point keyword match (+6 per word)
+    Each category is capped so a single strong keyword match
+    doesn't immediately max out the score.
+
+    Category caps:
+      - target_customer_type:  max +18
+      - industry:              max +15
+      - ideal_customer:        max +12
+      - idea keywords:         max +12
+      - pain_points:           max +10
+      - contact page bonus:    +3
+    Baseline: 25.  Theoretical max: ~95.
     """
     text = (
         result.get("title", "") + " " + result.get("body", "")
     ).lower()
 
-    score = 40  # baseline
+    score = 25  # baseline
 
-    # target_customer_type — strongest signal
+    # target_customer_type — strongest signal (capped at +18)
     tct = icp_data.get("target_customer_type", "")
-    for word in tct.lower().split():
+    tct_score = 0
+    for word in set(tct.lower().split()):
         if len(word) > 3 and word in text:
-            score += 15
+            tct_score += 9
+    score += min(tct_score, 18)
 
-    # Industry keywords
+    # Industry keywords (capped at +15)
+    ind_score = 0
+    seen_words = set()
     for ind in icp_data.get("industries", []):
         for word in ind.lower().split():
-            if len(word) > 3 and word in text:
-                score += 10
+            if len(word) > 3 and word not in seen_words and word in text:
+                ind_score += 5
+                seen_words.add(word)
+    score += min(ind_score, 15)
 
-    # Ideal customer segments
+    # Ideal customer segments (capped at +12)
+    cust_score = 0
+    seen_words = set()
     for cust in icp_data.get("ideal_customers", []):
         for word in cust.lower().split():
-            if len(word) > 3 and word in text:
-                score += 8
+            if len(word) > 3 and word not in seen_words and word in text:
+                cust_score += 4
+                seen_words.add(word)
+    score += min(cust_score, 12)
 
-    # Idea keywords
+    # Idea keywords (capped at +12)
     idea_kw = _extract_target_keywords(idea)
-    for word in idea_kw.split():
+    idea_score = 0
+    for word in set(idea_kw.split()):
         if len(word) > 3 and word in text:
-            score += 12
+            idea_score += 6
+    score += min(idea_score, 12)
 
-    # Pain-point keywords
+    # Pain-point keywords (capped at +10)
+    pain_score = 0
+    seen_words = set()
     for pp in icp_data.get("pain_points", []):
         for word in pp.lower().split():
-            if len(word) > 4 and word in text:
-                score += 6
+            if len(word) > 4 and word not in seen_words and word in text:
+                pain_score += 3
+                seen_words.add(word)
+    score += min(pain_score, 10)
 
     # Contact page bonus
     if "contact" in text:
-        score += 5
+        score += 3
 
-    return min(score, 100)
+    return min(score, 95)
+
 
 
 def _filter_relevant_results(
     results: List[Dict[str, str]],
     icp_data: Dict[str, Any],
     idea: str,
-    min_score: int = 45,
+    min_score: int = 30,
 ) -> List[Dict[str, str]]:
     """Remove blocked results, score remainder, and sort best-first."""
     kept: List[Dict[str, str]] = []
