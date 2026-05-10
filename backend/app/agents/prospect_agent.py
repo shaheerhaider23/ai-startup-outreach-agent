@@ -467,7 +467,7 @@ def _fallback_parse(
             "contact_hint": "Found via web search",
             "why_fit": body[:120] + ("…" if len(body) > 120 else ""),
             "pain_point": pain,
-            "lead_score": min(40 + r.get("_score", 30), 95),
+            "lead_score": min(r.get("_score", 50), 90),
             "evidence": body[:200],
             "source_url": r.get("href", ""),
             "query_used": r.get("query_used", ""),

@@ -1,15 +1,14 @@
-FROM python:3.9-slim
+FROM python:3.11-slim
 
 WORKDIR /app
 
-# Copy the backend requirements first
-COPY backend/requirements.txt .
+# Install dependencies from root requirements
+COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
-RUN pip install --no-cache-dir streamlit
 
-# Copy the rest of the application
+# Copy the entire project
 COPY . .
 
-EXPOSE 8080
+EXPOSE 8501
 
-CMD ["streamlit", "run", "streamlit_app.py", "--server.port=8080", "--server.address=0.0.0.0"]
+CMD ["streamlit", "run", "streamlit_app.py", "--server.port=8501", "--server.address=0.0.0.0", "--server.headless=true"]
