@@ -1,0 +1,26 @@
+[
+  {
+    "id": 1,
+    "name": "NovaTech",
+    "industry": "AI/ML",
+    "website": "https://novatech.example.com",
+    "contact_email": "hello@novatech.example.com",
+    "description": "Building next-gen AI infrastructure for enterprises."
+  },
+  {
+    "id": 2,
+    "name": "GreenPulse",
+    "industry": "CleanTech",
+    "website": "https://greenpulse.example.com",
+    "contact_email": "info@greenpulse.example.com",
+    "description": "Sustainable energy monitoring for smart buildings."
+  },
+  {
+    "id": 3,
+    "name": "MedFlow",
+    "industry": "HealthTech",
+    "website": "https://medflow.example.com",
+    "contact_email": "team@medflow.example.com",
+    "description": "AI-powered patient triage and workflow automation."
+  }
+]
