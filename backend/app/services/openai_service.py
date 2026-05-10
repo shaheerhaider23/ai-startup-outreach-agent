@@ -13,8 +13,15 @@ from app.config import settings
 
 logger = logging.getLogger(__name__)
 
-# ── Client initialisation (process-safe, module-level) ──────────
-_client = OpenAI(api_key=settings.OPENAI_API_KEY)
+
+def _get_client() -> OpenAI:
+    """Create OpenAI client lazily so missing keys don't crash on import."""
+    api_key = settings.OPENAI_API_KEY
+    if not api_key:
+        raise RuntimeError(
+            "OPENAI_API_KEY is not set. Add it to backend/.env or Streamlit secrets."
+        )
+    return OpenAI(api_key=api_key)
 
 
 async def call_openai_json(
@@ -53,7 +60,7 @@ async def call_openai_json(
     chosen_model = model or settings.OPENAI_MODEL
 
     try:
-        response = _client.chat.completions.create(
+        response = _get_client().chat.completions.create(
             model=chosen_model,
             temperature=temperature,
             max_tokens=max_tokens,

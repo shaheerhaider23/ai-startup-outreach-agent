@@ -3,8 +3,10 @@ import sys
 import os
 import asyncio
 
-# Ensure the backend directory is in the Python path so we can import the agents directly
-sys.path.append(os.path.join(os.path.dirname(__file__), "backend"))
+# Add the project root to the path so backend package imports work
+_root = os.path.dirname(os.path.abspath(__file__))
+if _root not in sys.path:
+    sys.path.insert(0, _root)
 
 from backend.app.agents.icp_agent import analyze_icp
 from backend.app.agents.prospect_agent import find_prospects
