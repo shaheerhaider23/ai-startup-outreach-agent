@@ -3,10 +3,13 @@ import sys
 import os
 import asyncio
 
-# Add the project root to the path so backend package imports work
+# Add both root and backend/ so all import styles work on Streamlit Cloud
 _root = os.path.dirname(os.path.abspath(__file__))
+_backend = os.path.join(_root, "backend")
 if _root not in sys.path:
     sys.path.insert(0, _root)
+if _backend not in sys.path:
+    sys.path.insert(0, _backend)
 
 from backend.app.agents.icp_agent import analyze_icp
 from backend.app.agents.prospect_agent import find_prospects
