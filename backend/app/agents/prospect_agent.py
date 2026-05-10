@@ -574,11 +574,18 @@ async def find_prospects(
 
         if not isinstance(leads, list) or len(leads) == 0:
             logger.warning(
-                "OpenAI returned no leads — falling back to direct parse",
+                "LLM returned no leads — falling back to direct parse",
             )
             leads = _fallback_parse(filtered, icp_data)[:count]
         else:
-            # Normalise every lead
+            # Build URL → pre-calculated relevance score map
+            url_score_map = {}
+            for r in filtered:
+                url = r.get("href", "")
+                if url:
+                    url_score_map[_normalise_domain(url)] = r.get("_score", 50)
+
+            # Normalise every lead and override LLM's lazy scoring
             for lead in leads:
                 lead.setdefault("source_type", "web")
                 lead.setdefault("contact_hint", "Found via web search")
@@ -586,8 +593,17 @@ async def find_prospects(
                 lead.setdefault("source_url", lead.get("website", ""))
                 lead.setdefault("query_used", "")
 
+                # Override lead_score with our pre-calculated relevance score
+                lead_url = lead.get("website", "") or lead.get("source_url", "")
+                lead_domain = _normalise_domain(lead_url) if lead_url else ""
+                if lead_domain and lead_domain in url_score_map:
+                    lead["lead_score"] = url_score_map[lead_domain]
+                else:
+                    # If no match found, cap at 80 to avoid fake high scores
+                    lead["lead_score"] = min(lead.get("lead_score", 50), 80)
+
         logger.info(
-            "RESULT — %d leads returned (source: web/openai)", len(leads[:count]),
+            "RESULT — %d leads returned (source: web/groq)", len(leads[:count]),
         )
         return leads[:count]
 
